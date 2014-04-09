@@ -54,8 +54,7 @@ q1(immun)
 
 mp3files <- list.files(path='C:\\Users\\Owner\\Documents\\GitHub\\585_Project', pattern='*.mp3')
 View(mp3files)
-mp3files[1]
-mp3files[[1]]
+
 
 dataframe <- function(mp3files){
   d.frame <- data.frame()
@@ -94,4 +93,14 @@ for (i in 1:length(mp3files)){
  cat("I am",i,"\n")
 }
 
-for (i in 1:length
+sound.df$Category[sound.df$name %in% c("chevy.mp3")] <- "Commercial"
+sound.df$Category[sound.df$name %in% c("math.mp3","engl.mp3","psyc.mp3")] <- "Lecture"
+sound.df$Category[sound.df$name %in% c("foxnews.mp3")] <- "News report"
+sound.df$Category[sound.df$name %in% c("obama.mp3")] <- "Political speech"
+sound.df$Category[sound.df$name %in% c("origami.mp3")] <- "How to"
+sound.df$Category[sound.df$name %in% c("slam1.mp3","slam2.mp3","slam3.mp3")] <- "Slam poetry"
+
+sound.df[order(sound.df$Category),]
+
+
+
