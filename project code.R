@@ -5,13 +5,17 @@ install.packages('seewave')
 library(seewave)
 listen(toto)
 getwd()
-setwd('C:/Users/Owner/Desktop/585')
+setwd('C:\\Users\\Owner\\Documents\\GitHub\\585_Project')
 toto <- readMP3('C:\\Users\\Owner\\Desktop\\africa 1.mp3')
 toto <- readMP3('africa 1.mp3')
 immun <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\immun.mp3')
 
 str(toto)
 class(toto)
+summary(toto)
+norm1toto <- normalize(toto, unit="1",center=TRUE,level=1)
+str(norm1toto)
+summary(norm1toto)
 summary(toto)
 play(toto)
 plot(immun)+plot(toto)
@@ -46,6 +50,8 @@ slam1 <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\slam1.mp3')
 theview <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\theview.mp3')
 immun <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\immun.mp3')
 
+q1(immun)
+
 mp3files <- list.files(path='C:\\Users\\Owner\\Documents\\GitHub\\585_Project', pattern='*.mp3')
 View(mp3files)
 mp3files[1]
@@ -59,6 +65,7 @@ d.frame <- rbind(d.frame, readMP3(mp3files[[i]]))
 }
 
 calc_stats <- function(x){
+  name <- mp3files[i]
  meanL <- mean(x@left)
  meanR <- mean(x@right)
  varL <- var(x@left)
@@ -71,8 +78,20 @@ calc_stats <- function(x){
  maxR <- max(x@right)
  rangeL <- maxL-minL
  rangeR <- maxR-maxL
- outliersL <- something
- outliersR <- something
- periodosL <- something
- periodosR <- something
+ #outliersL <- something
+ #outliersR <- something
+ #periodsL <- periodogram(x@left, width=length(x))
+ #periodsR <- periodogram(x@right, width=length(x))
+ df <- data.frame(name, meanL, meanR, varL, varR, sdL, sdR, minL, minR, maxL, maxR, rangeL, rangeR)
+return(df)
 }
+
+sound.df <- NULL
+for (i in 1:length(mp3files)){
+ temp <- readMP3(mp3files[i])
+ mystats <- calc_stats(temp)
+ sound.df <- rbind(sound.df, mystats)
+ cat("I am",i,"\n")
+}
+
+for (i in 1:length
