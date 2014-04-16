@@ -1,7 +1,7 @@
-install.packages('tuneR')
+#install.packages('tuneR')
+#install.packages('seewave')
 
 library(tuneR)
-install.packages('seewave')
 library(seewave)
 listen(toto)
 getwd()
@@ -76,7 +76,7 @@ calc_stats <- function(x){
  maxL <- max(x@left)
  maxR <- max(x@right)
  rangeL <- maxL-minL
- rangeR <- maxR-maxL
+ rangeR <- maxR-minL
  #outliersL <- something
  #outliersR <- something
  #periodsL <- periodogram(x@left, width=length(x))
@@ -93,14 +93,61 @@ for (i in 1:length(mp3files)){
  cat("I am",i,"\n")
 }
 
-sound.df$Category[sound.df$name %in% c("chevy.mp3")] <- "Commercial"
+sound.df$Category[sound.df$name %in% c("chevy.mp3","xbox.mp3")] <- "Commercial"
 sound.df$Category[sound.df$name %in% c("math.mp3","engl.mp3","psyc.mp3")] <- "Lecture"
 sound.df$Category[sound.df$name %in% c("foxnews.mp3")] <- "News report"
-sound.df$Category[sound.df$name %in% c("obama.mp3")] <- "Political speech"
+sound.df$Category[sound.df$name %in% c("obama.mp3","palin.mp3","lbj.mp3")] <- "Political speech"
 sound.df$Category[sound.df$name %in% c("origami.mp3")] <- "How to"
 sound.df$Category[sound.df$name %in% c("slam1.mp3","slam2.mp3","slam3.mp3")] <- "Slam poetry"
 
-sound.df[order(sound.df$Category),]
+View(sound.df[order(sound.df$Category),])
+
+summary(sound.df)
+summary(t(sound.df))
+
+library(ggplot2)
+qplot(data=sound.df, x=name, y=meanL)
+summary(psyc.mp3$sound.df)
+
+library(plyr)
+sound.df2 <- ddply(sound.df, .(Category), summarise, 
+                   overallmeanL=mean(meanL), overallmeanR=mean(meanR),
+                   varianceL=mean(varL), varianceR=mean(varR))
+
+music_files <- NULL
+music_files <- as.data.frame(mp3files)
+music_files
+
+music_files$Category[music_files$mp3files %in% c("chevy.mp3","xbox.mp3")] <- "Commercial"
+music_files$Category[music_files$mp3files %in% c("math.mp3","engl.mp3","psyc.mp3")] <- "Lecture"
+music_files$Category[music_files$mp3files %in% c("foxnews.mp3")] <- "News report"
+music_files$Category[music_files$mp3files %in% c("obama.mp3","palin.mp3","lbj.mp3")] <- "Political speech"
+music_files$Category[music_files$mp3files %in% c("origami.mp3")] <- "How to"
+music_files$Category[music_files$mp3files %in% c("slam1.mp3","slam2.mp3","slam3.mp3")] <- "Slam poetry"
+
+View(music_files[order(music_files$Category),])
+
+all_stats <- NULL
+all_stats <- ddply(music_files, .(Category), summarise,
+  meanL <- mean(mp3files@left),
+  meanR <- mean(mp3files@right),
+  varL <- var(mp3files@left),
+  varR <- var(mp3files@right),
+  sdL <- sd(mp3files@left),
+  sdR <- sd(mp3files@right),
+  minL <- min(mp3files@left),
+  minR <- min(mp3files@right),
+  maxL <- max(mp3files@left),
+  maxR <- max(mp3files@right),
+  rangeL <- maxL-minL,
+  rangeR <- maxR-minL)
 
 
 
+sound.df3 <- NULL
+for (i in 1:length(mp3files)){
+  temp <- readMP3(mp3files[i])
+  overallstats <- ddply(calc_stats(temp)
+  sound.df <- rbind(sound.df, mystats)
+  cat("I am",i,"\n")
+}
