@@ -1,0 +1,211 @@
+\documentclass{article}
+\usepackage{graphicx, hyperref}
+\usepackage[margin=1in]{geometry}
+\usepackage[backend=bibtex, natbib=true]{biblatex}
+\newtheorem{rexample}{R Example}[section]
+\addbibresource{references.bib}
+\usepackage{float}
+\newcommand{\hh}[1]{{\color{magenta} #1}}
+
+\setlength{\parskip}{3ex}
+\setlength{\parindent}{0pt}
+
+\title{Analysis of Sound Characteristics to Classify Types of Speech}
+\author{Lindsey Jackson}
+
+\begin{document}
+\maketitle
+
+<<opts,echo=FALSE>>=
+opts_chunk$set(fig.lp='fig:')
+#library(xtable)
+@
+
+The motivation behind this project is to be able to classify forms of communication based on various aspects of their respective audio qualities. Not only types of communication but types of speakers, too, will be classified based on sound wave characteristics such as: pitch, dynamics, volume, and pauses. Summary statistics on the frequencies and visual analysis of each sound clip will serve as the means to interpret the above-mentioned characteristics. The goal, then, is to identify what distinguishes each speech form from the others.
+
+The data were collected as youtube videos that were converted to mp3 files and shortened to 60 seconds in length via Audacity, an audio editing software program. The files were then analyzed using the TuneR package in R. The sound clips were gathered from the following varieties of speech: political speeches, infomercials, news reports, academic lectures, instructional or ``how to" speech, and slam poetry.
+
+One of the first methods of classification I would like to explore is that of visual detection. Can we simply look at a wave file and determine its category correctly? Figure \ref{fig:wavplots} displays one .wav file from each of the six categories of speech in order to help answer this question.
+
+<<libraries, echo=FALSE, warning=FALSE, message=FALSE>>=
+library(tuneR)
+#library(seewave)
+library(ggplot2)
+library(plyr)
+#library(iplots)
+library(xtable)
+@
+
+<<wavplots, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=10, out.width='\\textwidth', fig.cap='Visual comparison of different audio types based on their respective wave plots', fig.pos='H'>>=
+setwd('C:\\Users\\Owner\\Documents\\GitHub\\585_Project')
+mp3files <- list.files(path='C:\\Users\\Owner\\Documents\\GitHub\\585_Project', pattern='*.mp3')
+foxnews <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\foxnews.mp3')
+khou <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\khou.mp3')
+nbc <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\nbc.mp3')
+cnn <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\cnn.mp3')
+
+slam1 <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\slam1.mp3')
+slam2 <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\slam2.mp3')
+slam3 <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\slam3.mp3')
+slam4 <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\slam4.mp3')
+slam5 <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\slam5.mp3')
+
+origami <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\origami.mp3')
+firstaid <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\firstaid.mp3')
+bball <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\bball.mp3')
+makeup <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\makeup.mp3')
+uke <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\uke.mp3')
+
+obama <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\obama.mp3')
+palin <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\palin.mp3')
+lbj <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\lbj.mp3')
+bush <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\bush.mp3')
+carter <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\carter.mp3')
+
+math <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\math.mp3')
+engl <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\engl.mp3')
+stat <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\stat.mp3')
+law <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\law.mp3')
+
+xbox <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\xbox.mp3')
+oxi <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\oxi.mp3')
+pjs <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\pjs.mp3')
+pest <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\pest.mp3')
+snore <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\snore.mp3')
+reach <- readMP3('C:\\Users\\Owner\\Documents\\GitHub\\585_Project\\reach.mp3')
+
+par(mfrow=c(6,1))
+plot(mono(nbc,"left"),main="News report")
+plot(mono(slam3,"left"),main="Slam poetry")
+plot(mono(uke,"left"),main="How to")
+plot(mono(bush,"left"),main="Political speech")
+plot(mono(stat,"left"),main="Lecture")
+plot(mono(pjs,"left"),main="Infomercial")
+@
+
+Simply glancing at the six plots, we can make clear distinction between each different category. Examining more closely allows us to pick apart in more detail what distinguishes the types of speech from each other. For instance, there are fewer gaps between spikes in the news report and infomercial waves. The infomercials are also very dense, while the lecture and how-to categories have more gaps, pauses, and instances of silence or low noise.
+
+Now that we have graphical evidence of differences, the next question is: what quantitative evidence is there of distinct classifications of forms of speech? I have written a function to compute general summary statistics on each wave file. The function returns the mean, variance, standard deviation, minimum, maximum, and range for the left channel of each file. Figure \ref{fig:calcstats} below displays these statistics, along with the speech category of each file.
+
+<<calcstats, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=4, out.width='\\textwidth', fig.cap='Visual comparison of different audio types based on their respective wave plots', results='asis', fig.pos='H'>>=
+calc_stats <- function(x){
+  name <- mp3files[i]
+  meanL <- mean(x@left)
+  varL <- var(x@left)
+  sdL <- sd(x@left)
+  minL <- min(x@left)
+  maxL <- max(x@left)
+  rangeL <- abs(maxL-minL)
+  df <- data.frame(name, meanL, varL, sdL, minL, maxL, rangeL)
+  return(df)
+}
+
+sound.df <- NULL
+for (i in 1:length(mp3files)){
+  temp <- readMP3(mp3files[i])
+  mystats <- calc_stats(temp)
+  sound.df <- rbind(sound.df, mystats)
+  cat("I am",i,"\n")
+}
+
+sound.df$Category[sound.df$name %in% c("xbox.mp3","oxi.mp3","pest.mp3","snore.mp3","pjs.mp3","reach.mp3")] <- "Infomercial"
+sound.df$Category[sound.df$name %in% c("math.mp3","engl.mp3","law.mp3","stat.mp3")] <- "Lecture"
+sound.df$Category[sound.df$name %in% c("foxnews.mp3","khou.mp3","nbc.mp3","cnn.mp3")] <- "News"
+sound.df$Category[sound.df$name %in% c("obama.mp3","palin.mp3","lbj.mp3","bush.mp3","carter.mp3")] <- "Political"
+sound.df$Category[sound.df$name %in% c("origami.mp3","bball.mp3","firstaid.mp3","makeup.mp3","uke.mp3")] <- "How to"
+sound.df$Category[sound.df$name %in% c("slam1.mp3","slam2.mp3","slam3.mp3","slam4.mp3","slam5.mp3")] <- "Slam poetry"
+
+xtable(as.data.frame(sound.df[order(sound.df$Category),]))
+
+View(sound.df[order(sound.df$Category),])
+@
+
+It will be easier to see how categories differ by plotting some of their summary statistics. Figure \ref{fig:blah1} shows the mean frequency of the left channel of each file, grouped by category.
+
+<<blah1, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=4, out.width='\\textwidth', fig.cap='Mean frequencies by category of speech.', fig.pos='H'>>=
+ggplot(data=sound.df,aes(x=Category,y=meanL))+geom_point()+geom_smooth(aes(group=1))+theme(axis.text.x=element_text(size=18,color="purple"))+theme(axis.title=element_text(size=20))+labs(y="Left Mean Frequency")
+@
+
+Excluding infomercials because of the extreme outlier, the categories with the two lowest mean frequencies are news reports and political speeches, and that with the highest is slam poetry. However, slam poetry captures the highest mean frequency, which may make its standing at the top less reliable. Thus it is worth noting that the next highest is how-to speech. This may be more due to the nature of recording how-to video or audio, rather than the volume of the speaker himself. Typically, self-made instructional videos (such as the ones used in this data set), are recorded in close quarters to the microphone. This may increase the overall amplitude of the sound file. From this plot we can also get a sense of the variability of each speech category. For instance, slam poetry is extremely more variable than other types of speech, while lectures and news reports appear to vary the least. To get a more accurate depiction we look at Figure \ref{fig:blah2} next, which shows variance of each sound file by category.
+
+<<blah2, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=4, out.width='\\textwidth', fig.cap='Frequency variance of wave files by category of speech.', fig.pos='H'>>=
+ggplot(data=sound.df,aes(x=Category,y=varL))+geom_point()+theme(axis.text.x=element_text(size=18,color="purple"))+theme(axis.title=element_text(size=20))+labs(y="Left Variance")
+@
+
+It is interesting to note that slam poetry has both the highest and lowest variances, just as it had the highest and lowest means. This may be an indicator of its cultural inclusion the creative arts; any given poet may have a very different style than the next. In this way, slam poetry most likely deviates from following a formula much more than the other categories. Personal creativity and uniqueness are highly valued in this form of speech, which may contribute to the increased variability we see among these sound files. On the contrary, we see that academic lectures and political speeches have the lowest variances, and even low variability among the individual variance values. Again, this could be due to the fact that these two forms of speech are likely to stick to a formula more than others. While many educators strive to bring creative teaching methods to the table in a macro sense, perhaps the bare-bones nature of lecture-giving is somewhat formulaic. The manner in which a professor describes and explains, pauses for students to process, asks a question, allows an answer after a few moments, etc.--this could yield more consistency and therefore less variation in this particular field of speech. This idea of predictable speech-giving may also apply to presidents or political candidates addressing their nation`s citizens. To attempt to verify this further we will go back to visual comparisons, but this time within each category individually. Figures \ref{fig:blah3} through \ref{fig:blah8} display side-by-side visual comparisons of the audio files for news reports, slam poetry, how-to tutorials, political speeches, lectures, and infomercials, respectively.
+
+<<blah3, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=10, out.width='\\textwidth', fig.cap='News reports. Characteristics: rather consistent and dense, few pauses and silences, noticeable level and/or scale shifts when speaker changes.', fig.pos='H'>>=
+par(mfrow=c(4,1))
+plot(mono(foxnews,"left"),main="Fox")
+plot(mono(khou,"left"),main="KHOU")
+plot(mono(nbc,"left"),main="NBC")
+plot(mono(cnn,"left"),main="CNN")
+@
+
+<<blah4, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=10, out.width='\\textwidth', fig.cap='Slam poetry. Characteristics: the commonality is the lack of commonality. Each clip is very different from the others, exhibiting the artistic and creative nature of this speech form.', fig.pos='H'>>=
+par(mfrow=c(5,1))
+plot(mono(slam1,"left"),main="Poet 1")
+plot(mono(slam2,"left"),main="Poet 2")
+plot(mono(slam3,"left"),main="Poet 3")
+plot(mono(slam4,"left"),main="Poet 4")
+plot(mono(slam5,"left"),main="Poet 5")
+@
+
+<<blah5, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=10, out.width='\\textwidth', fig.cap='How to. Characteristics: longer and/or more frequent pauses, short/choppy audio at times, no noticeable changes in speaker.', fig.pos='H'>>=
+par(mfrow=c(5,1))
+plot(mono(origami,"left"),main="Origami")
+plot(mono(firstaid,"left"),main="First Aid")
+plot(mono(bball,"left"),main="Basketball")
+plot(mono(makeup,"left"),main="Makeup")
+plot(mono(uke,"left"),main="Ukulele")
+@
+
+<<blah6, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=10, out.width='\\textwidth', fig.cap='Political speeches. Characteristics: large bursts of background noise, pauses and gaps in speech, lack of consistency overall.', fig.pos='H'>>=
+par(mfrow=c(5,1))
+plot(mono(obama,"left"),main="Obama")
+plot(mono(palin,"left"),main="Palin")
+plot(mono(lbj,"left"),main="LBJ")
+plot(mono(bush,"left"),main="Bush")
+plot(mono(carter,"left"),main="Carter")
+@
+
+<<blah7, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=10, out.width='\\textwidth', fig.cap='Lectures. Characteristics: occasional long pauses, potential changes in speaker, tall spikes here and there.', fig.pos='H'>>=
+par(mfrow=c(4,1))
+plot(mono(math,"left"),main="Math")
+plot(mono(engl,"left"),main="English")
+plot(mono(stat,"left"),main="Statistics")
+plot(mono(law,"left"),main="Law")
+@
+
+<<blah8, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=10, out.width='\\textwidth', fig.cap='Infomercials. Characteristics: very dense and consistent, little to no silence or pauses, lots of background noise, and possible changes in speaker evidenced by level/scale shifts.', fig.pos='H'>>=
+par(mfrow=c(5,1))
+plot(mono(xbox,"left"),main="XBOX 360")
+plot(mono(oxi,"left"),main="OxiClean")
+plot(mono(pjs,"left"),main="Pajama Jeans")
+plot(mono(pest,"left"),main="Riddex Pest Repellent")
+plot(mono(snore,"left"),main="SnoreEzzzz")
+@
+
+<<blah9, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=10, out.width='\\textwidth', fig.cap='Match the mystery wave on top with one of the categories below it.', fig.pos='H'>>=
+par(mfrow=c(5,1))
+plot(mono(reach,"left"),main="???")
+plot(mono(origami,"left"),main="How to")
+plot(mono(snore,"left"),main="Infomercial")
+plot(mono(carter,"left"),main="Political speech")
+plot(mono(law,"left"),main="Lecture")
+@
+
+Characteristics of the mystery wave: dense, consistent, little to no pauses or silences. Visually this seems to match up best with the infomercial category. If you guessed this, you are correct! The mystery file comes from an infomercial for Ready Reach. The known infomercial clip in Figure \ref{fig:blah9} differs in that there is clearer evidence of multiple speakers, but aside from this the two waves show a very similar pattern.
+
+<<blah10, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=6, out.width='\\textwidth', fig.cap='Visual comparison of different audio types based on their respective wave plots', fig.pos='H'>>=
+require(ggplot2)
+require(reshape2)
+require(reshape)
+df_m <- melt(reshape:::rescaler(sound.df), id.vars=c('name', 'Category'), measure.vars=c('meanL','maxL','sdL'))
+View(df_m)
+ggplot(df_m) + geom_line(aes(x=variable,y=value,group=name,color=Category),size=I(1.1)) + geom_point(aes(x=variable,y=value,group=name))
+#+ geom_text(aes(x=variable,y=value,label=name),hjust=0,vjust=0,angle=45)
+@
+Figure \ref{fig:blah10} is a parallel coordinate plot showing the relationship between three variables among each wave file: mean, max, and standard deviation. There is some evidence of clustering for news reports and political speeches, respectively. On the other hand, we again see much more variability among the slam poetry clips. This leads to the next step in this project, which is to conduct k-means clustering methods on the data. Given the visual and brief statistical evidence for classification of speech forms in this paper, I think that the clustering results will be very strong as further work is done with more data. Additionally, a future goal is to develop an algorithm that takes in a wave file and spits out the appropriate category of speech to which it belongs. Other areas to which this overall type of audio anlaysis would be beneficial might include audio forensics, a personal interest of mine. Advanced analytical techniques could be used to determine number of persons in the room, as well as their age, gender, and the setting or atmosphere surrounding the incident.
+
+\end{document}
